@@ -37,11 +37,12 @@ public class NimForUE : ModuleRules
 		bEnableExceptions = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 		PublicIncludePathModuleNames.Add("GameplayAbilities");
+		PublicIncludePathModuleNames.Add("CLInventorySystem");
 		Console.WriteLine(EngineDirectory);
 		PrivateIncludePaths.Add(GetModuleDirectory("Engine"));
 		
 		PublicDependencyModuleNames.AddRange(new string[] {
-			"GameplayAbilities",
+			"GameplayAbilities", "CLInventorySystem",
 			"Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem",
 			"Slate",
 			"SlateCore",

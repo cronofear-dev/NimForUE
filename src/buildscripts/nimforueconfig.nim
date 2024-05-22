@@ -355,6 +355,10 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
 
   let engineRuntimePlugins = @["GameplayAbilities"]
 
+  let projectPluginsDir = pluginDir / ".."
+  let customModuleDir = projectPluginsDir / "CLCommonGameplay/Source/CLInventorySystem"
+  echo "CustomModuleDir: " & customModuleDir
+
 #Notice the header are not need for compiling the dll. We use a PCH. They will be needed to traverse the C++
   let moduleHeaders = 
     runtimeModules.map(module=>getEngineRuntimeIncludePathFor("Runtime", module)) & 
@@ -364,7 +368,8 @@ proc getUEHeadersIncludePaths*(conf:NimForUEConfig) : seq[string] =
     intermediateGenModules.map(module=>getEngineIntermediateIncludePathFor(module)) &
     enginePlugins.map(module=>getEnginePluginModule(module)) & 
     engineRuntimePlugins.map(module=>getEngineRuntimePluginModule(module)) &
-    engineExperimentalPlugins.map(module=>getEngineExperimentalPluginModule(module))
+    engineExperimentalPlugins.map(module=>getEngineExperimentalPluginModule(module)) &
+    customModuleDir
 
   (essentialHeaders & moduleHeaders & editorHeaders).map(path => path.normalizedPath().normalizePathEnd())
 
@@ -457,7 +462,6 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   else:
     experimentalPlugins.add("PCG")
 
-
   let modules = @["Core", "CoreUObject", "PhysicsCore", "Engine", 
     "SlateCore","Slate", "UnrealEd", "InputCore", "GameplayTags", "GameplayTasks", 
     "NetCore", "UMG", "AdvancedPreviewScene", "AIModule", "EditorSubsystem"]
@@ -468,7 +472,24 @@ proc getUESymbols*(conf: NimForUEConfig): seq[string] =
   let engineRuntimePluginSymbolsPaths = @["GameplayAbilities"].map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Runtime", modName)).flatten()
   let engineExperimentalPluginSymbolsPaths = experimentalPlugins.map(modName=>getEnginePluginSymbolsPathFor("UnrealEditor", "Experimental", modName)).flatten()
 
-  (engineSymbolsPaths & enginePluginSymbolsPaths &  engineRuntimePluginSymbolsPaths & engineExperimentalPluginSymbolsPaths & getNimForUESymbols()).map(path => path.normalizedPath())
+  echo ""
+  echo "engineSymbolsPaths: " & enginePluginSymbolsPaths[0]
+  echo ""
+
+  let projectPluginsDir = pluginDir / ".."
+  let myModuleName = "CLInventorySystem"
+  let myPrefix = "UnrealEditor"
+  let mySuffix = ""
+  let customModuleSymbolsDir = projectPluginsDir / "CLCommonGameplay" / "Intermediate/Build" / platformDir / unrealFolder / confDir / myModuleName
+  var finalDirs: seq[string]
+  if conf.withEditor: 
+    finalDirs = @[customModuleSymbolsDir / &"{myPrefix}-{myModuleName}{mySuffix}.lib"]
+  else:
+    finalDirs = getObjFiles(customModuleSymbolsDir, myModuleName)
+
+  echo "finalDirs: " & finalDirs[0]
+
+  (engineSymbolsPaths & enginePluginSymbolsPaths &  engineRuntimePluginSymbolsPaths & engineExperimentalPluginSymbolsPaths & getNimForUESymbols() & finalDirs).map(path => path.normalizedPath())
 
 
 
